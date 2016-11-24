@@ -41,36 +41,23 @@ defmodule ScramSpeedway.Reader do
 
   def handle_info({:tcp, _socket, read}, reader) do
     IO.inspect(read)
-    # [antenna, tag_id, _epc] =
-    #   details
-    #   |> to_string
-    #   |> String.split(",", parts: 3)
-    # chip = @table[tag_id]
-    # if chip && antenna == state.antenna do
-    #   Logger.info("Detected #{chip} at #{antenna}.")
-    #   sound = Path.expand("../../priv/#{chip}.mp3", __DIR__)
-    #   System.cmd(state.player, [sound])
-    # else
-    #   Logger.debug("Ignoring #{chip || tag_id} at #{antenna}.")
-    # end
+    [tag_id, _epc] =
+      details
+      |> to_string
+      |> String.split(",", parts: 2)
+    chip = @table[tag_id]
+    new_reader =
+      if chip && now - reader.last_play > 5 do
+          Logger.info("Detected #{chip}.")
+          sound = Path.expand("../../priv/#{chip}.mp3", __DIR__)
+          Player.play(sound)
+          %__MODULE__{reader | last_play: now}
+        else
+          Logger.debug("Ignoring #{tag_id}.")
+          reader
+        end
     {:noreply, reader}
   end
-  # def handle_info({port, {:data, data}}, reader)
-  # when is_port(port) do
-  #   [_match, epc] = Regex.run(~r{\AEPC:(\S+)\b}, data)
-  #   chip = @table[epc]
-  #   new_reader =
-  #   if chip && now - reader.last_play > 5 do
-  #       Logger.info("Detected #{chip}.")
-  #       sound = Path.expand("../../priv/#{chip}.mp3", __DIR__)
-  #       Player.play(sound)
-  #       %__MODULE__{reader | last_play: now}
-  #     else
-  #       Logger.debug("Ignoring #{epc}.")
-  #       reader
-  #     end
-  #   {:noreply, new_reader}
-  # end
   def handle_info({:tcp_closed, _socket}, reader) do
     connect(self)
     {:noreply, %__MODULE__{reader | socket: nil}}
