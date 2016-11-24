@@ -57,7 +57,7 @@ defmodule ScramSpeedway.Reader do
           Logger.debug("Ignoring #{tag_id}.")
           reader
         end
-    {:noreply, reader}
+    {:noreply, new_reader}
   end
   def handle_info({:tcp_closed, _socket}, reader) do
     connect(self)
