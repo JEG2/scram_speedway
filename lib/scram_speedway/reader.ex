@@ -40,10 +40,11 @@ defmodule ScramSpeedway.Reader do
   end
 
   def handle_info({:tcp, _socket, read}, reader) do
-    IO.inspect(read)
     [tag_id, _epc] =
-      details
+      read
       |> to_string
+      |> String.split("\n", parts: 2)
+      |> hd
       |> String.split(",", parts: 2)
     chip = @table[tag_id]
     new_reader =
